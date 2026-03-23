@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>FPS</title>
+<style>
+body { margin:0; overflow:hidden; }
+#crosshair {
+  position:fixed;
+  top:50%; left:50%;
+  width:10px; height:10px;
+  background:white;
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+}
+</style>
+</head>
+<body>
+
+<div id="crosshair"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160/examples/js/controls/PointerLockControls.js"></script>
+
+<script>
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight,1,1000);
+
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// ライト
+scene.add(new THREE.HemisphereLight(0xffffff,0x444444));
+
+// 地面
+const floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(200,200),
+  new THREE.MeshStandardMaterial({color:0x808080})
+);
+floor.rotation.x = -Math.PI/2;
+scene.add(floor);
+
+// FPS
+const controls = new THREE.PointerLockControls(camera, document.body);
+scene.add(controls.getObject());
+
+document.addEventListener("click", ()=>controls.lock());
+
+// 移動
+let f=false,b=false,l=false,r=false;
+
+document.addEventListener("keydown", e=>{
+  if(e.key==="w") f=true;
+  if(e.key==="s") b=true;
+  if(e.key==="a") l=true;
+  if(e.key==="d") r=true;
+});
+
+document.addEventListener("keyup", e=>{
+  if(e.key==="w") f=false;
+  if(e.key==="s") b=false;
+  if(e.key==="a") l=false;
+  if(e.key==="d") r=false;
+});
+
+// 敵
+const enemy = new THREE.Mesh(
+  new THREE.BoxGeometry(2,4,2),
+  new THREE.MeshStandardMaterial({color:"red"})
+);
+enemy.position.set(0,2,-20);
+scene.add(enemy);
+
+// 弾
+const raycaster = new THREE.Raycaster();
+
+document.addEventListener("click", ()=>{
+  if(!controls.isLocked) return;
+
+  raycaster.setFromCamera({x:0,y:0}, camera);
+  const hit = raycaster.intersectObject(enemy);
+
+  if(hit.length>0){
+    enemy.material.color.set("blue");
+  }
+});
+
+// ループ
+function animate(){
+  requestAnimationFrame(animate);
+
+  if(f) controls.moveForward(0.2);
+  if(b) controls.moveForward(-0.2);
+  if(l) controls.moveRight(-0.2);
+  if(r) controls.moveRight(0.2);
+
+  renderer.render(scene,camera);
+}
+animate();
+</script>
+
+</body>
+</html>
